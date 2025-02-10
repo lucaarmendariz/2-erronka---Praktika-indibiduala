@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="eu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Txostena</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Estilo para los gráficos para hacerlos responsivos */
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Contenedor de los gráficos para alinearlos de forma responsiva */
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chart-box {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+        }
+
+        /* Mejorar el tamaño de la fuente en dispositivos pequeños */
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>API Txostena</h1>
+    <button onclick="sortuPDF()">Sortu PDF</button>
+
+    <!-- Contenedor para los gráficos -->
+    <div class="charts-container">
+        <div class="chart-box">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let datuGuztiak = [];  // 📌 Array global para almacenar los datos de la API
+
+        // Función para obtener los datos de la API
+        async function lortuDatuak() {
+            const response = await fetch('http://localhost:8080/api/langileak', {
+                mode: "cors"
+            });
+            const langileak = await response.json();
+
+            try {
+                // Mapeamos la estructura según la clase Langileak
+                datuGuztiak = langileak.map(langilea => ({
+                    id: langilea.id,
+                    izena: langilea.izena,
+                    abizenak: langilea.abizenak,
+                    taldeIzena: langilea.taldeIzena,
+                }));
+            } catch (error) {
+                console.error("Errorea API deian:", error);
+                datuGuztiak = [];
+            }
+        }
+
+        // Función para mostrar los gráficos
+        async function erakutsiGrafikoak() {
+            await lortuDatuak();
+
+            // Contamos cuántos alumnos hay por taldea
+            const taldeak = {};
+            datuGuztiak.forEach(persona => {
+                const taldea = persona.taldeIzena;
+                if (taldea !== null) {
+                    taldeak[taldea] = (taldeak[taldea] || 0) + 1;
+                }
+            });
+
+            // Obtenemos los nombres de los "taldeak" y la cantidad de alumnos
+            const taldeIzena = Object.keys(taldeak);
+            const langileKopurua = Object.values(taldeak);
+
+            // Gráfico de líneas
+            new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: taldeIzena,
+                    datasets: [{
+                        label: 'Langile Kopurua',
+                        data: langileKopurua,
+                        borderColor: 'purple',
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Taldea',
+                                font: {
+                                    weight: 'bold'  // Pone el texto en negrita
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Langileak',
+                                font: {
+                                    weight: 'bold'  // Pone el texto en negrita
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de barras
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: taldeIzena,
+                    datasets: [{
+                        label: 'Langile Kopurua',
+                        data: langileKopurua,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Taldea',
+                                font: {
+                                    weight: 'bold'  // Pone el texto en negrita
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Langileak',
+                                font: {
+                                    weight: 'bold'  // Pone el texto en negrita
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico circular (tarta)
+            new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: taldeIzena,
+                    datasets: [{
+                        label: 'Langile Kopurua',
+                        data: langileKopurua,
+                        backgroundColor: ['red', 'blue', 'green', 'orange', 'purple'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para generar el PDF
+        async function sortuPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: [100, 150] // Tamaño del documento
+            });
+
+            const logoa = "data:image/jpeg;base64,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";    // tu logo aquí
+            // Agregar el logo en la esquina superior derecha
+            // Agregar el logo al principio
+            doc.addImage(logoa, "PNG", 40, 10, 20, 20);
+
+            // Agregar el título con un tamaño de fuente adecuado
+            doc.setFont("helvetica", "bold");
+            doc.text("Api txostena", 50, 40, { align: "center" });
+
+            // Definir márgenes y espacio
+            const margenX = 10; // Margen izquierdo
+            const margenY = 50; // Margen superior (después del título)
+            const maxHeight = 130; // Altura máxima de la página
+            let y = margenY; // Posición vertical inicial
+
+            // Agrupar estudiantes por su grupo
+            // Agrupar estudiantes por su grupo
+            const grupos = {};
+            datuGuztiak.forEach(persona => {
+                if (!grupos[persona.taldeIzena]) {
+                    grupos[persona.taldeIzena] = [];
+                }
+                grupos[persona.taldeIzena].push(persona);
+            });
+
+            // Imprimir los grupos con la cantidad de alumnos
+            Object.keys(grupos).forEach(grupo => {
+                // Calcular la altura del grupo, considerando nombre del grupo y la cantidad de alumnos
+                let alturaGrupo = 10 + (grupos[grupo].length * 8); // 10 es la altura para el nombre del grupo
+
+                // Añadir nombre del grupo y la cantidad de alumnos
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(`${grupo} (${grupos[grupo].length} alumnos)`, margenX, y);
+                y += 8; // Espacio después del nombre del grupo
+
+                // No es necesario imprimir los estudiantes, solo el nombre del grupo y la cantidad
+            });
+
+            // Guardar el archivo
+            doc.save('TaldeenIkasleakTxostena.pdf');
+        }
+
+
+        // Cargar gráficos al iniciar
+        erakutsiGrafikoak();
+
+    </script>
+</body>
+
+</html>
