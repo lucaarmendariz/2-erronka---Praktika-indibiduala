@@ -14,4 +14,15 @@ Honekin jspdf eta chartjs gure proiektua garatzeko instalazioarekin amaitu dugu.
 Proiektuaren erabilera:
 
     - Erronkaren apiaren bidez, hartzen dut Langileen get bat, honek hartzen ditu langile guztien datu guztiak.
-    - Grafiko guztiak egiteko 
+    - Gero, api berdinarekin hartzen ditut talde bakoitzaren txanda kopurua.
+    - Azkenik bilatu dut api publiko bat interneten, zenbat pokemon mota bakoitzeko dagoen ikusteko. 
+
+Proiektua behar dituen baliabideak:
+    
+    - Erronkaren apia (proiektuaren karpetan dagoena E2Back deitzen dena).
+    - MySQL datu base batekin funtzionatzen du. 
+
+Proiektuaren erabilerak:
+
+    -Erabilera oso sinplea du, bakarrik bistaratzen ditu hiru grafiko, datu ezberdinekin eta pdf bat sortzen du, pdf-an 
+    aterako dira talde bakoitzaren ikasle kopurua santurtziren logoarekin eta titulu batekin, hori da guztia.
